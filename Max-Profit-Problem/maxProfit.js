@@ -1,5 +1,5 @@
 function calculateMaxProfit(timeUnit) {
-  // Property definitions
+  
   const properties = [
     { name: "Theatre", buildTime: 5, earnings: 1500, land: "2x1", code: "T" },
     { name: "Pub", buildTime: 4, earnings: 1000, land: "1x1", code: "P" },
@@ -12,19 +12,19 @@ function calculateMaxProfit(timeUnit) {
     },
   ];
 
-  // This will store our best solution
-  let bestSolution = {
-    profit: 0,
-    properties: { T: 0, P: 0, C: 0 },
-  };
+  // This will store all optimal solutions
+  let bestSolutions = [];
+  let maxProfit = 0;
 
   function exploreCombinations(remainingTime, currentProfit, builtProperties) {
     // Check if current solution is better than best found so far
-    if (currentProfit > bestSolution.profit) {
-      bestSolution = {
-        profit: currentProfit,
-        properties: { ...builtProperties },
-      };
+    if (currentProfit > maxProfit) {
+      // Clear previous solutions as we found a better profit
+      bestSolutions = [{ ...builtProperties }];
+      maxProfit = currentProfit;
+    } else if (currentProfit === maxProfit) {
+      // Add this solution to our collection of best solutions
+      bestSolutions.push({ ...builtProperties });
     }
 
     // Try building each type of property
@@ -52,25 +52,30 @@ function calculateMaxProfit(timeUnit) {
   // Start exploration with all time units available and no properties built
   exploreCombinations(timeUnit, 0, { T: 0, P: 0, C: 0 });
 
-  return bestSolution;
+  return {
+    profit: maxProfit,
+    solutions: bestSolutions
+  };
 }
 
-function formatSolution(solution) {
-  return `Earnings: $${solution.profit}\nSolutions\n1. T: ${solution.properties.T} P: ${solution.properties.P} C: ${solution.properties.C}`;
+function formatSolution(result) {
+  let output = `Earnings: $${result.profit}\nSolutions`;
+  
+  result.solutions.forEach((solution, index) => {
+    output += `\n${index + 1}. T: ${solution.T} P: ${solution.P} C: ${solution.C}`;
+  });
+  
+  return output;
 }
 
 function solveTestCase(timeUnit) {
   console.log(`Test Case\nTime Unit: ${timeUnit}`);
-  const solution = calculateMaxProfit(timeUnit);
-  console.log(formatSolution(solution));
+  const result = calculateMaxProfit(timeUnit);
+  console.log(formatSolution(result));
 }
 
 // Solve the test cases provided in the problem
-// solveTestCase(7); // Test Case 1
-// solveTestCase(8); // Test Case 2
-solveTestCase(7); // Test Case 3
-
-// Let's also try some additional test cases
-// solveTestCase(20);
-// solveTestCase(30);
-// solveTestCase(50);
+solveTestCase(7); 
+solveTestCase(8); 
+solveTestCase(49); 
+solveTestCase(13); 
