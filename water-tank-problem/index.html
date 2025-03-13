@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Water Tank Problem</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f0f5ff;
+      }
+      h1 {
+        text-align: center;
+        color: #2c3e50;
+      }
+      .container {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+      .controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      input {
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      button {
+        padding: 8px 16px;
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      button:hover {
+        background-color: #2980b9;
+      }
+      .visualization {
+        margin-top: 20px;
+        overflow-x: auto;
+      }
+      svg {
+        display: block;
+        margin: 0 auto;
+      }
+      .block {
+        fill: #3498db;
+      }
+      .water {
+        fill: #85c1e9;
+        fill-opacity: 0.7;
+      }
+      .result {
+        text-align: center;
+        font-size: 18px;
+        margin-top: 20px;
+        font-weight: bold;
+        color: #2c3e50;
+      }
+      .preset-options {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .preset-btn {
+        background-color: #2ecc71;
+      }
+      .preset-btn:hover {
+        background-color: #27ae60;
+      }
+      .input-container {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+      label {
+        font-weight: bold;
+        color: #2c3e50;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Water Tank Problem Solver</h1>
+
+    <div class="container">
+      <div class="input-container">
+        <label for="heights"
+          >Enter block heights (space or comma separated):</label
+        >
+        <input
+          type="text"
+          id="heights"
+          placeholder="e.g., 0 1 0 2 1 0 1 3 2 1 2 1"
+        />
+      </div>
+
+      <div class="controls">
+        <button id="calculate">Calculate Water</button>
+        <button id="random">Generate Random Heights</button>
+      </div>
+
+      <div class="preset-options">
+        <label>Presets:</label>
+        <button class="preset-btn" data-heights="0, 4, 0, 0,0 ,6, 0,6,4, 0">
+          Test cases 1
+        </button>
+        <button class="preset-btn" data-heights="4 2 0 3 2 5">
+          Test cases 2
+        </button>
+        <button class="preset-btn" data-heights="3 0 2 0 4">
+          Test cases 3
+        </button>
+      </div>
+
+      <div class="result" id="result"></div>
+
+      <div class="visualization" id="visualization"></div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const heightsInput = document.getElementById("heights");
+        const calculateBtn = document.getElementById("calculate");
+        const randomBtn = document.getElementById("random");
+        const resultDiv = document.getElementById("result");
+        const visualizationDiv = document.getElementById("visualization");
+        const presetBtns = document.querySelectorAll(".preset-btn");
+
+        // Default example
+        heightsInput.value = "0 1 0 2 1 0 1 3 2 1 2 1";
+
+        // Calculate trapped water
+        function calculateTrappedWater(heights) {
+          if (heights.length <= 2) return 0;
+
+          let totalWater = 0;
+          const n = heights.length;
+
+          // Arrays to store the maximum height to the left and right of each position
+          const leftMax = new Array(n).fill(0);
+          const rightMax = new Array(n).fill(0);
+
+          // Fill leftMax array
+          leftMax[0] = heights[0];
+          for (let i = 1; i < n; i++) {
+            leftMax[i] = Math.max(leftMax[i - 1], heights[i]);
+          }
+
+          // Fill rightMax array
+          rightMax[n - 1] = heights[n - 1];
+          for (let i = n - 2; i >= 0; i--) {
+            rightMax[i] = Math.max(rightMax[i + 1], heights[i]);
+          }
+
+          // Calculate water at each position
+          const waterHeights = new Array(n).fill(0);
+          for (let i = 0; i < n; i++) {
+            const waterLevel = Math.min(leftMax[i], rightMax[i]);
+            waterHeights[i] = Math.max(0, waterLevel - heights[i]);
+            totalWater += waterHeights[i];
+          }
+
+          return { totalWater, waterHeights };
+        }
+
+        // Generate SVG visualization
+        function createVisualization(heights, waterHeights) {
+          // Calculate dimensions
+          const n = heights.length;
+          const blockWidth = 40;
+          const unitHeight = 30;
+          const padding = 20;
+          const maxHeight = Math.max(
+            ...heights,
+            ...heights.map((h, i) => h + waterHeights[i])
+          );
+
+          const svgWidth = n * blockWidth + 2 * padding;
+          const svgHeight = maxHeight * unitHeight + 2 * padding;
+
+          // Create SVG element
+          const svg = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "svg"
+          );
+          svg.setAttribute("width", svgWidth);
+          svg.setAttribute("height", svgHeight);
+          svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
+
+          // Draw blocks and water
+          for (let i = 0; i < n; i++) {
+            const x = padding + i * blockWidth;
+            const blockHeight = heights[i] * unitHeight;
+            const waterHeight = waterHeights[i] * unitHeight;
+            const y = svgHeight - padding - blockHeight;
+
+            // Draw block
+            if (heights[i] > 0) {
+              const block = document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "rect"
+              );
+              block.setAttribute("x", x);
+              block.setAttribute("y", y);
+              block.setAttribute("width", blockWidth);
+              block.setAttribute("height", blockHeight);
+              block.setAttribute("class", "block");
+              svg.appendChild(block);
+            }
+
+            // Draw water
+            if (waterHeights[i] > 0) {
+              const water = document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "rect"
+              );
+              water.setAttribute("x", x);
+              water.setAttribute("y", y - waterHeight);
+              water.setAttribute("width", blockWidth);
+              water.setAttribute("height", waterHeight);
+              water.setAttribute("class", "water");
+              svg.appendChild(water);
+            }
+
+            // Add height label
+            const text = document.createElementNS(
+              "http://www.w3.org/2000/svg",
+              "text"
+            );
+            text.setAttribute("x", x + blockWidth / 2);
+            text.setAttribute("y", svgHeight - 5);
+            text.setAttribute("text-anchor", "middle");
+            text.setAttribute("font-size", "12");
+            text.textContent = heights[i];
+            svg.appendChild(text);
+          }
+
+          visualizationDiv.innerHTML = "";
+          visualizationDiv.appendChild(svg);
+        }
+
+        // Parse input heights
+        function parseHeights(input) {
+          return input
+            .split(/[ ,]+/)
+            .map((h) => parseInt(h.trim()))
+            .filter((h) => !isNaN(h) && h >= 0);
+        }
+
+        // Calculate and visualize
+        function processHeights() {
+          const heights = parseHeights(heightsInput.value);
+
+          if (heights.length < 2) {
+            resultDiv.textContent =
+              "Please enter at least two valid block heights.";
+            visualizationDiv.innerHTML = "";
+            return;
+          }
+
+          const { totalWater, waterHeights } = calculateTrappedWater(heights);
+          resultDiv.textContent = `Total water units: ${totalWater}`;
+          createVisualization(heights, waterHeights);
+        }
+
+        // Generate random heights
+        function generateRandomHeights() {
+          const length = Math.floor(Math.random() * 10) + 5; // 5 to 14
+          const heights = [];
+
+          for (let i = 0; i < length; i++) {
+            heights.push(Math.floor(Math.random() * 8)); // 0 to 7
+          }
+
+          heightsInput.value = heights.join(" ");
+          processHeights();
+        }
+
+        // Event listeners
+        calculateBtn.addEventListener("click", processHeights);
+        randomBtn.addEventListener("click", generateRandomHeights);
+
+        presetBtns.forEach((btn) => {
+          btn.addEventListener("click", function () {
+            heightsInput.value = this.getAttribute("data-heights");
+            processHeights();
+          });
+        });
+
+        // Initialize with default example
+        processHeights();
+      });
+    </script>
+  </body>
+</html>
