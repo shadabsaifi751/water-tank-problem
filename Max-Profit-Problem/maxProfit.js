@@ -12,34 +12,23 @@ function calculateMaxProfit(timeUnit) {
     },
   ];
 
-  // This will store all optimal solutions
   let bestSolutions = [];
   let maxProfit = 0;
 
   function exploreCombinations(remainingTime, currentProfit, builtProperties) {
-    // Check if current solution is better than best found so far
     if (currentProfit > maxProfit) {
-      // Clear previous solutions as we found a better profit
       bestSolutions = [{ ...builtProperties }];
       maxProfit = currentProfit;
     } else if (currentProfit === maxProfit) {
-      // Add this solution to our collection of best solutions
       bestSolutions.push({ ...builtProperties });
     }
 
-    // Try building each type of property
     for (const property of properties) {
-      // If we have enough time to build this property
-      if (remainingTime >= property.buildTime) {
-        // Calculate operational time and profit from this property
+      if (remainingTime > property.buildTime) { // Changed condition here
         const operationalTime = remainingTime - property.buildTime;
         const additionalProfit = operationalTime * property.earnings;
-
-        // Create new property count with this property added
         const newProperties = { ...builtProperties };
         newProperties[property.code]++;
-
-        // Recursively explore this path
         exploreCombinations(
           operationalTime,
           currentProfit + additionalProfit,
@@ -49,7 +38,6 @@ function calculateMaxProfit(timeUnit) {
     }
   }
 
-  // Start exploration with all time units available and no properties built
   exploreCombinations(timeUnit, 0, { T: 0, P: 0, C: 0 });
 
   return {
@@ -58,6 +46,7 @@ function calculateMaxProfit(timeUnit) {
   };
 }
 
+// Format and solve test cases as before
 function formatSolution(result) {
   let output = `Earnings: $${result.profit}\nSolutions`;
   
@@ -74,8 +63,37 @@ function solveTestCase(timeUnit) {
   console.log(formatSolution(result));
 }
 
-// Solve the test cases provided in the problem
+// Test cases
 solveTestCase(7); 
-solveTestCase(8); 
-solveTestCase(49); 
-solveTestCase(13); 
+solveTestCase(8);
+solveTestCase(13);
+solveTestCase(49);
+
+
+
+// output
+
+// For input 49
+// maxEarnings: 324000,
+// 2 possibilities:
+// T: 9, P: 0, C:0
+// T: 8, P: 2, C: 0
+
+// Test Case 1
+// Time Unit: 7
+// Earnings: $3000
+// Solutions
+// 1. T: 1 P: 0 C: 0
+// 2. T: 0 P: 1 C: 0
+
+// Test Case 2
+// Time Unit: 8
+// Earnings: $4500
+// Solutions
+// 1. T: 1 P: 0 C: 0
+
+// Test Case 3
+// Time Unit: 13
+// Earnings: $16500
+// Solutions
+// 1. T: 2 P: 0 C: 0
